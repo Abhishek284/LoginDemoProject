@@ -1,5 +1,6 @@
 package com.dji.logindemoproject;
 
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
@@ -38,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
     private static BaseProduct mProduct;
     private Handler mHandler;
     private Button login_button,logout_button,setListeners;
+    private Handler handler= new Handler();
+    AsyncCall asyncCall = new AsyncCall();
 
     private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback = new DJISDKManager.SDKManagerCallback() {
         @Override
@@ -50,7 +53,6 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
                     @Override
                     public void run() {
                         Toast.makeText(getApplicationContext(), "Register Success", Toast.LENGTH_LONG).show();
-//                        loginAccount();
 
 
                     }
@@ -116,21 +118,22 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
         logout_button = (Button) findViewById(R.id.logout);
         setListeners = (Button) findViewById(R.id.set_listeners);
 
-                DJISDKManager.getInstance().registerApp(MainActivity.this, mDJISDKManagerCallback);
+        asyncCall.execute();
+
 
 
         login_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               loginAccount();
 
+              loginAccount();
 
             }
         });
         logout_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                logoutAccount();
+                logoutAccount();
 
             }
         });
@@ -142,14 +145,17 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
         });
 
 
+
+
     }
 
-    private void addTheKeyListeners(){
-        KeyManagerHelper keyManagerHelper = new KeyManagerHelper(MainActivity.this,getApplicationContext());
+    private void addTheKeyListeners() {
+        KeyManagerHelper keyManagerHelper = new KeyManagerHelper(MainActivity.this, getApplicationContext());
         keyManagerHelper.addKeyListeners();
     }
+
     @Override
-    public void onUpdate(List<DJIDiagnostics> djiDiagnosticses){
+    public void onUpdate(List<DJIDiagnostics> djiDiagnosticses) {
 
 
     }
@@ -208,7 +214,8 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
                 new CommonCallbacks.CompletionCallbackWith<UserAccountState>() {
                     @Override
                     public void onSuccess(final UserAccountState userAccountState) {
-                        Toast.makeText(getApplicationContext(), "Login is Successfull", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "User Login is Successfull", Toast.LENGTH_SHORT).show();
+
 
                     }
                     @Override
@@ -229,5 +236,17 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
                 }
             }
         });
+    }
+
+
+    public class AsyncCall extends AsyncTask<Void,Void,Void>{
+
+
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            DJISDKManager.getInstance().registerApp(MainActivity.this, mDJISDKManagerCallback);
+            return null;
+        }
     }
 }

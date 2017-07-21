@@ -43,10 +43,9 @@ public class KeyManagerHelper  {
     private Handler handlerC2LongClick = new Handler();
     private Handler handlerC2SingleClick = new Handler();
     private boolean isHandlerC1SingleClickCallbackSet = false, isC1DoubleClickSuccess=false, isHandlerC2SingleClickCallbackSet = false, isC2DoubleClickSuccess=false;
-    private boolean isC1Clicked = false, isC2Clicked = false;
 
     private KeyCallback callback;
-    public long c1PressedTime,c2PressedTime;
+    private long c1PressedTime,c2PressedTime;
     private Context context;
 
     public KeyManagerHelper(KeyCallback callback, Context context) {
@@ -59,7 +58,7 @@ public class KeyManagerHelper  {
         public void onValueChange(@Nullable Object o, @Nullable final Object newValue) {
 
             boolean clicked = newValue != null && ((HardwareState.Button) newValue).isClicked();
-            if (clicked && isHandlerC1SingleClickCallbackSet==false) {
+            if (clicked && !isHandlerC1SingleClickCallbackSet) {
 
                     c1PressedTime = System.currentTimeMillis();
                 handlerC1LongClick.postDelayed(c1LongClickRunnable, 1500);
@@ -76,14 +75,14 @@ public class KeyManagerHelper  {
 
 
             else if ((System.currentTimeMillis()-c1PressedTime)<1500){
-                if(isHandlerC1SingleClickCallbackSet!=false){
+                if(isHandlerC1SingleClickCallbackSet){
                     handlerC1SingleClick.removeCallbacks(c1ClickRunnable);
                     isHandlerC1SingleClickCallbackSet=false;
                     handlerC1LongClick.removeCallbacks(c1LongClickRunnable);
                     callback.onC1DoubleClicked();
                     isC1DoubleClickSuccess=true;
 
-                }else if(isC1DoubleClickSuccess==true) {
+                }else if(isC1DoubleClickSuccess) {
                     c1PressedTime=-1;
                     isC1DoubleClickSuccess=false;
                 }
@@ -126,7 +125,7 @@ public class KeyManagerHelper  {
         @Override
         public void onValueChange(@Nullable Object o, @Nullable final Object newValue) {
             boolean clicked = newValue != null && ((HardwareState.Button) newValue).isClicked();
-            if (clicked && isHandlerC2SingleClickCallbackSet==false) {
+            if (clicked && !isHandlerC2SingleClickCallbackSet) {
 
                 c2PressedTime = System.currentTimeMillis();
                 handlerC2LongClick.postDelayed(c2LongClickRunnable, 1500);
@@ -142,14 +141,14 @@ public class KeyManagerHelper  {
 
 
             else if ((System.currentTimeMillis()-c2PressedTime)<1500){
-                if(isHandlerC2SingleClickCallbackSet!=false){
+                if(isHandlerC2SingleClickCallbackSet){
                     handlerC2SingleClick.removeCallbacks(c2ClickRunnable);
                     isHandlerC2SingleClickCallbackSet=false;
                     handlerC2LongClick.removeCallbacks(c2LongClickRunnable);
                     callback.onC2DoubleClicked();
                     isC2DoubleClickSuccess=true;
 
-                }else if(isC2DoubleClickSuccess==true) {
+                }else if(isC2DoubleClickSuccess) {
                     c2PressedTime=-1;
                     isC2DoubleClickSuccess=false;
                 }
