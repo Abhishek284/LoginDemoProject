@@ -1,5 +1,7 @@
 package com.dji.logindemoproject;
 
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,8 +11,11 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.graphics.PorterDuff;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -30,6 +35,9 @@ import dji.sdk.useraccount.UserAccountManager;
 import dji.thirdparty.rx.Observable;
 import dji.thirdparty.rx.schedulers.Schedulers;
 
+import static com.dji.logindemoproject.R.id.c1_double_click;
+import static com.dji.logindemoproject.R.id.c1_long_click;
+import static com.dji.logindemoproject.R.id.c2_long_click;
 import static dji.midware.data.forbid.DJIFlyForbidController.FlyforbidDataSourceType.DJI;
 
 
@@ -39,8 +47,12 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
     private static BaseProduct mProduct;
     private Handler mHandler;
     private Button login_button,logout_button,setListeners;
+    private CheckBox c1_click,c2_click,c1_double_click,c2_double_click, c1_long_click,c2_long_click,both_c1_c2_click;
     private Handler handler= new Handler();
     AsyncCall asyncCall = new AsyncCall();
+    private boolean isRemoteConnected=false;
+    private CheckBox checkBox;
+    private ProgressBar progressBar;
 
     private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback = new DJISDKManager.SDKManagerCallback() {
         @Override
@@ -53,6 +65,9 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
                     @Override
                     public void run() {
                         Toast.makeText(getApplicationContext(), "Register Success", Toast.LENGTH_LONG).show();
+                        KeyManagerHelper keyManagerHelper = new KeyManagerHelper(MainActivity.this, getApplicationContext());
+                        keyManagerHelper.addKeyListeners();
+                        progressBar.setVisibility(View.GONE);
 
 
                     }
@@ -74,6 +89,8 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
             if(mProduct != null) {
                 mProduct.setBaseProductListener(mDJIBaseProductListener);
             }
+
+            handler.post(checkAircraftConnection);
             notifyStatusChange();
         }
     };
@@ -82,7 +99,12 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
         public void onComponentChange(BaseProduct.ComponentKey key, BaseComponent oldComponent, BaseComponent newComponent) {
             if(newComponent != null) {
                 newComponent.setComponentListener(mDJIComponentListener);
+
             }
+            Toast.makeText(getApplicationContext(), key+" "+oldComponent+" "+newComponent, Toast.LENGTH_SHORT).show();
+
+            handler.post(checkRemoteConnection);
+
             notifyStatusChange();
         }
         @Override
@@ -108,51 +130,95 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
         }
     };
 
+    private Runnable checkAircraftConnection = new Runnable() {
+        @Override
+        public void run() {
+            if(mProduct!=null){
+                if(mProduct.isConnected()){
+                    Toast.makeText(getApplicationContext(), "Aircraft and remote connected", Toast.LENGTH_LONG).show();
+                    isRemoteConnected=true;
+                    checkBox.setChecked(true);
+                }
+                else {
+                    Toast.makeText(getApplicationContext(), "Remote connected", Toast.LENGTH_LONG).show();
+                    isRemoteConnected=true;
+                    checkBox.setChecked(true);
+                }
+            }
+        }
+    };
+
+    private Runnable checkRemoteConnection = new Runnable() {
+        @Override
+        public void run() {
+            if (isRemoteConnected==true){
+                isRemoteConnected=false;
+                Toast.makeText(getApplicationContext(), "Remote disconnected", Toast.LENGTH_LONG).show();
+                checkBox.setChecked(false);
+            }
+            else {
+                isRemoteConnected=true;
+                Toast.makeText(getApplicationContext(), "Remote reconnected", Toast.LENGTH_LONG).show();
+                checkBox.setChecked(true);
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //Initialize DJI SDK Manager
         mHandler = new Handler(Looper.getMainLooper());
-        login_button = (Button) findViewById(R.id.login);
-        logout_button = (Button) findViewById(R.id.logout);
-        setListeners = (Button) findViewById(R.id.set_listeners);
+//        login_button = (Button) findViewById(R.id.login);
+//        logout_button = (Button) findViewById(R.id.logout);
+//        setListeners = (Button) findViewById(R.id.set_listeners);
+        c1_click= (CheckBox) findViewById(R.id.c1_single_click);
+        c2_click= (CheckBox) findViewById(R.id.c2_single_click);
+        c1_long_click= (CheckBox) findViewById(R.id.c1_long_click);
+        c2_long_click= (CheckBox) findViewById(R.id.c2_long_click);
+        c1_double_click= (CheckBox) findViewById(R.id.c1_double_click);
+        c2_double_click= (CheckBox) findViewById(R.id.c2_double_click);
+        both_c1_c2_click = (CheckBox) findViewById(R.id.c1_c2_both_click);
+        checkBox = (CheckBox) findViewById(R.id.remote_checkbox);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar1);
+        progressBar.setVisibility(View.VISIBLE);
 
         asyncCall.execute();
-
-
-
-        login_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-              loginAccount();
-
-            }
-        });
-        logout_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                logoutAccount();
-
-            }
-        });
-        setListeners.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                addTheKeyListeners();
-            }
-        });
+//
+//        login_button.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//
+//              loginAccount();
+//
+//            }
+//        });
+//        logout_button.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                logoutAccount();
+//                clearAll();
+//
+//            }
+//        });
+//        setListeners.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                addTheKeyListeners();
+//                setListeners.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+//            }
+//        });
 
 
 
 
     }
 
-    private void addTheKeyListeners() {
-        KeyManagerHelper keyManagerHelper = new KeyManagerHelper(MainActivity.this, getApplicationContext());
-        keyManagerHelper.addKeyListeners();
-    }
+//    private void addTheKeyListeners() {
+//        KeyManagerHelper keyManagerHelper = new KeyManagerHelper(MainActivity.this, getApplicationContext());
+//        keyManagerHelper.addKeyListeners();
+//    }
 
     @Override
     public void onUpdate(List<DJIDiagnostics> djiDiagnosticses) {
@@ -161,35 +227,81 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
     }
     @Override
     public void onC1Clicked(){
-        Toast.makeText(getApplicationContext(),"C1 is clicked", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(),"C1 is clicked", Toast.LENGTH_SHORT).show();
+        clearAll();
+//        c1_click.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+        c1_click.setChecked(true);
+
+
+
     }
     @Override
     public void onC1LongClicked(){
-        Toast.makeText(getApplicationContext(),"C1 Long clicked ", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(),"C1 Long clicked ", Toast.LENGTH_SHORT).show();
+        clearAll();
+//        c1_long_click.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+        c1_long_click.setChecked(true);
     }
     @Override
     public void onC1DoubleClicked(){
-        Toast.makeText(getApplicationContext(),"C1 is double clicked", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(),"C1 is double clicked", Toast.LENGTH_SHORT).show();
+        clearAll();
+//        c1_double_click.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+        c1_double_click.setChecked(true);
+
     }
 
 
     @Override
     public void onC2Clicked(){
-        Toast.makeText(getApplicationContext(),"C2 is clicked", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(),"C2 is clicked", Toast.LENGTH_SHORT).show();
+        clearAll();
+//        c2_click.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+        c2_click.setChecked(true);
     }
     @Override
     public void onC2LongClicked(){
-        Toast.makeText(getApplicationContext(),"C2 Long clicked ", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(),"C2 Long clicked ", Toast.LENGTH_SHORT).show();
+        clearAll();
+//        c2_long_click.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+        c2_long_click.setChecked(true);
     }
     @Override
     public void onC2DoubleClicked(){
-        Toast.makeText(getApplicationContext(),"C2 is double clicked", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(),"C2 is double clicked", Toast.LENGTH_SHORT).show();
+        clearAll();
+//        c2_double_click.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+        c2_double_click.setChecked(true);
     }
     @Override
     public void onC1C2BothClicked(){
-        Toast.makeText(getApplicationContext(),"Both C1 and C2 is clicked", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(),"Both C1 and C2 is clicked", Toast.LENGTH_SHORT).show();
+        clearAll();
+//        both_c1_c2_click.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
+    both_c1_c2_click.setChecked(true);
     }
 
+    private void clearAll(){
+//        setListeners.getBackground().setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+//        c1_click.getBackground().setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+//        c2_click.getBackground().setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+//        c1_long_click.getBackground().setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+//        c2_long_click.getBackground().setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+//        c1_double_click.getBackground().setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+//        c2_double_click.getBackground().setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+//        both_c1_c2_click.getBackground().setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+        c1_click.setChecked(false);
+        c2_click.setChecked(false);
+        c1_long_click.setChecked(false);
+        c2_long_click.setChecked(false);
+        c1_double_click.setChecked(false);
+        c2_double_click.setChecked(false);
+        both_c1_c2_click.setChecked(false);
+
+
+
+
+    }
 
 
     public void onResume(){

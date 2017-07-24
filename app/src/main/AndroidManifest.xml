@@ -56,7 +56,6 @@
         <service android:name="dji.sdk.sdkmanager.DJIGlobalService"></service>
         <!-- DJI SDK -->
         <activity android:name=".MainActivity"
-            android:screenOrientation="portrait"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:theme="@style/AppTheme"
             android:launchMode="singleInstance">

@@ -38,10 +38,10 @@ import static dji.midware.data.model.P3.DataCameraVirtualKey.KEY.S1;
  */
 public class KeyManagerHelper  {
 
-    private Handler handlerC1LongClick = new Handler();
-    private Handler handlerC1SingleClick = new Handler();
-    private Handler handlerC2LongClick = new Handler();
-    private Handler handlerC2SingleClick = new Handler();
+    private Handler handler = new Handler();
+//    private Handler handlerC1SingleClick = new Handler();
+//    private Handler handlerC2LongClick = new Handler();
+//    private Handler handlerC2SingleClick = new Handler();
     private boolean isHandlerC1SingleClickCallbackSet = false, isC1DoubleClickSuccess=false, isHandlerC2SingleClickCallbackSet = false, isC2DoubleClickSuccess=false;
 
     private KeyCallback callback;
@@ -59,27 +59,31 @@ public class KeyManagerHelper  {
 
             boolean clicked = newValue != null && ((HardwareState.Button) newValue).isClicked();
             if (clicked && !isHandlerC1SingleClickCallbackSet) {
+//                if(isHandlerC2SingleClickCallbackSet){
+//                    isHandlerC1SingleClickCallbackSet=true;
+//                    c2PressedTime=-1;
+//                }
 
                     c1PressedTime = System.currentTimeMillis();
-                handlerC1LongClick.postDelayed(c1LongClickRunnable, 1500);
-                if(Math.abs(c1PressedTime-c2PressedTime)<200){
+                handler.postDelayed(c1LongClickRunnable, 1000);
+                if(Math.abs(c1PressedTime-c2PressedTime)<120){
                     c1PressedTime=-1;
                     c2PressedTime=-1;
-                    callback.onC1C2BothClicked();
-                    handlerC1LongClick.removeCallbacks(c1LongClickRunnable);
-                    handlerC2LongClick.removeCallbacks(c2LongClickRunnable);
+                    handler.post(c1c2BothClickRunnable);
+                    handler.removeCallbacks(c1LongClickRunnable);
+                    handler.removeCallbacks(c2LongClickRunnable);
 
                 }
 
                 }
 
 
-            else if ((System.currentTimeMillis()-c1PressedTime)<1500){
+            else if ((System.currentTimeMillis()-c1PressedTime)<1000){
                 if(isHandlerC1SingleClickCallbackSet){
-                    handlerC1SingleClick.removeCallbacks(c1ClickRunnable);
+                    handler.removeCallbacks(c1ClickRunnable);
                     isHandlerC1SingleClickCallbackSet=false;
-                    handlerC1LongClick.removeCallbacks(c1LongClickRunnable);
-                    callback.onC1DoubleClicked();
+                    //handler.removeCallbacks(c1LongClickRunnable);
+                    handler.post(c1DoubleClickRunnable);
                     isC1DoubleClickSuccess=true;
 
                 }else if(isC1DoubleClickSuccess) {
@@ -87,12 +91,12 @@ public class KeyManagerHelper  {
                     isC1DoubleClickSuccess=false;
                 }
                 else {
-
+                    handler.removeCallbacks(c1LongClickRunnable);
                     isHandlerC1SingleClickCallbackSet=true;
-                    handlerC1SingleClick.postDelayed(c1ClickRunnable, 750);
+                    handler.postDelayed(c1ClickRunnable, 500);
                 }
             }
-            else if((System.currentTimeMillis()-c1PressedTime)>1500){
+            else if((System.currentTimeMillis()-c1PressedTime)>1000){
                 c1PressedTime=-1;
             }
 
@@ -101,18 +105,33 @@ public class KeyManagerHelper  {
 
     };
 
+    private Runnable c1c2BothClickRunnable = new Runnable(){
+        @Override
+        public void run() {
+            callback.onC1C2BothClicked();
+
+        }
+    };
+
+    private Runnable c1DoubleClickRunnable = new Runnable(){
+        @Override
+        public void run() {
+            callback.onC1DoubleClicked();
+
+        }
+    };
+
     private Runnable c1ClickRunnable = new Runnable(){
         @Override
         public void run() {
             isHandlerC1SingleClickCallbackSet=false;
-            handlerC1LongClick.removeCallbacks(c1LongClickRunnable);
+            handler.removeCallbacks(c1LongClickRunnable);
             callback.onC1Clicked();
 
             c1PressedTime=-1;
 
         }
     };
-
     private Runnable c1LongClickRunnable = new Runnable(){
         @Override
         public void run() {
@@ -126,26 +145,30 @@ public class KeyManagerHelper  {
         public void onValueChange(@Nullable Object o, @Nullable final Object newValue) {
             boolean clicked = newValue != null && ((HardwareState.Button) newValue).isClicked();
             if (clicked && !isHandlerC2SingleClickCallbackSet) {
+//                if(isHandlerC1SingleClickCallbackSet){
+//                    isHandlerC2SingleClickCallbackSet=false;
+//                    c1PressedTime=-1;
+//                }
 
                 c2PressedTime = System.currentTimeMillis();
-                handlerC2LongClick.postDelayed(c2LongClickRunnable, 1500);
-                if(Math.abs(c1PressedTime-c2PressedTime)<200){
+                handler.postDelayed(c2LongClickRunnable, 1000);
+                if(Math.abs(c1PressedTime-c2PressedTime)<120){
                     c1PressedTime=-1;
                     c2PressedTime=-1;
-                    callback.onC1C2BothClicked();
-                    handlerC2LongClick.removeCallbacks(c2LongClickRunnable);
-                    handlerC1LongClick.removeCallbacks(c1LongClickRunnable);
+                    handler.post(c1c2BothClickRunnable);
+                    handler.removeCallbacks(c2LongClickRunnable);
+                    handler.removeCallbacks(c1LongClickRunnable);
 
                 }
             }
 
 
-            else if ((System.currentTimeMillis()-c2PressedTime)<1500){
+            else if ((System.currentTimeMillis()-c2PressedTime)<1000){
                 if(isHandlerC2SingleClickCallbackSet){
-                    handlerC2SingleClick.removeCallbacks(c2ClickRunnable);
+                    handler.removeCallbacks(c2ClickRunnable);
                     isHandlerC2SingleClickCallbackSet=false;
-                    handlerC2LongClick.removeCallbacks(c2LongClickRunnable);
-                    callback.onC2DoubleClicked();
+                   // handler.removeCallbacks(c2LongClickRunnable);
+                    handler.post(c2DoubleClickRunnable);
                     isC2DoubleClickSuccess=true;
 
                 }else if(isC2DoubleClickSuccess) {
@@ -153,27 +176,35 @@ public class KeyManagerHelper  {
                     isC2DoubleClickSuccess=false;
                 }
                 else {
-
+                    handler.removeCallbacks(c2LongClickRunnable);
                     isHandlerC2SingleClickCallbackSet=true;
-                    handlerC2SingleClick.postDelayed(c2ClickRunnable, 600);
+                    handler.postDelayed(c2ClickRunnable, 500);
 
                 }
             }
-            else if((System.currentTimeMillis()-c2PressedTime)>1500){
+            else if((System.currentTimeMillis()-c2PressedTime)>1000){
                 c2PressedTime=-1;
             }
         }
     };
 
+    private Runnable c2DoubleClickRunnable = new Runnable(){
+        @Override
+        public void run() {
+            callback.onC2DoubleClicked();
+
+        }
+    };
     private Runnable c2ClickRunnable = new Runnable(){
         @Override
         public void run() {
             callback.onC2Clicked();
-            handlerC2LongClick.removeCallbacks(c2LongClickRunnable);
+            handler.removeCallbacks(c2LongClickRunnable);
             isHandlerC2SingleClickCallbackSet=false;
             c2PressedTime=-1;
         }
     };
+
 
     private Runnable c2LongClickRunnable = new Runnable(){
         @Override
@@ -185,7 +216,7 @@ public class KeyManagerHelper  {
 
 
     public void addKeyListeners() {
-        Toast.makeText(context,"Adding Key Listerners"+" "+KeyManager.getInstance(), Toast.LENGTH_SHORT).show();
+//        Toast.makeText(context,"Adding Key Listerners"+" "+KeyManager.getInstance(), Toast.LENGTH_SHORT).show();
         if (KeyManager.getInstance() != null) {
 //            Toast.makeText(context,"Inside if condition", Toast.LENGTH_SHORT).show();
             removeKeyListeners();
