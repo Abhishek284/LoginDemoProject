@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
                 newComponent.setComponentListener(mDJIComponentListener);
 
             }
-            Toast.makeText(getApplicationContext(), key+" "+oldComponent+" "+newComponent, Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getApplicationContext(), key+" "+oldComponent+" "+newComponent, Toast.LENGTH_SHORT).show();
 
             handler.post(checkRemoteConnection);
 
@@ -153,12 +153,12 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
         public void run() {
             if (isRemoteConnected==true){
                 isRemoteConnected=false;
-                Toast.makeText(getApplicationContext(), "Remote disconnected", Toast.LENGTH_LONG).show();
+//                Toast.makeText(getApplicationContext(), "Remote disconnected", Toast.LENGTH_LONG).show();
                 checkBox.setChecked(false);
             }
             else {
                 isRemoteConnected=true;
-                Toast.makeText(getApplicationContext(), "Remote reconnected", Toast.LENGTH_LONG).show();
+//                Toast.makeText(getApplicationContext(), "Remote reconnected", Toast.LENGTH_LONG).show();
                 checkBox.setChecked(true);
             }
         }
