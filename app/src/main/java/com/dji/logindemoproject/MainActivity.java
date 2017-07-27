@@ -1,8 +1,11 @@
 package com.dji.logindemoproject;
 
-import android.graphics.Color;
-import android.graphics.PorterDuff;
+import android.Manifest;
+import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
@@ -13,44 +16,36 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.graphics.PorterDuff;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import dji.common.error.DJIError;
-import dji.common.error.DJIGeoError;
-import dji.common.error.DJIMissionError;
 import dji.common.error.DJISDKError;
 import dji.common.useraccount.UserAccountState;
 import dji.common.util.CommonCallbacks;
-import dji.midware.data.config.P3.Ccode;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.base.DJIDiagnostics;
+import dji.sdk.remotecontroller.RemoteController;
 import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.useraccount.UserAccountManager;
-import dji.thirdparty.rx.Observable;
-import dji.thirdparty.rx.schedulers.Schedulers;
 
-import static com.dji.logindemoproject.R.id.c1_double_click;
-import static com.dji.logindemoproject.R.id.c1_long_click;
-import static com.dji.logindemoproject.R.id.c2_long_click;
-import static dji.midware.data.forbid.DJIFlyForbidController.FlyforbidDataSourceType.DJI;
+import static android.R.attr.key;
 
 
 public class MainActivity extends AppCompatActivity implements DJIDiagnostics.DiagnosticsInformationCallback, KeyManagerHelper.KeyCallback{
     private static final String TAG = MainActivity.class.getName();
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private static BaseProduct mProduct;
+    private static BaseComponent mComponent;
     private Handler mHandler;
     private Button login_button,logout_button,setListeners;
     private CheckBox c1_click,c2_click,c1_double_click,c2_double_click, c1_long_click,c2_long_click,both_c1_c2_click;
     private Handler handler= new Handler();
-    AsyncCall asyncCall = new AsyncCall();
+//    AsyncCall asyncCall = new AsyncCall();
     private boolean isRemoteConnected=false;
+    RemoteController remoteController ;
     private CheckBox checkBox;
     private ProgressBar progressBar;
 
@@ -88,12 +83,16 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
             mProduct = newProduct;
             if(mProduct != null) {
                 mProduct.setBaseProductListener(mDJIBaseProductListener);
+
             }
 
             handler.post(checkAircraftConnection);
             notifyStatusChange();
         }
     };
+
+
+
     private BaseProduct.BaseProductListener mDJIBaseProductListener = new BaseProduct.BaseProductListener() {
         @Override
         public void onComponentChange(BaseProduct.ComponentKey key, BaseComponent oldComponent, BaseComponent newComponent) {
@@ -101,7 +100,14 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
                 newComponent.setComponentListener(mDJIComponentListener);
 
             }
-//            Toast.makeText(getApplicationContext(), key+" "+oldComponent+" "+newComponent, Toast.LENGTH_SHORT).show();
+
+//            Toast.makeText(getApplicationContext(), key+" "+oldComponent+" "+newComponent, Toast.LENGTH_LONG).show();
+
+
+            if(key==BaseProduct.ComponentKey.REMOTE_CONTROLLER){
+                Log.d("onComponentChange",key+" "+"Remote controller key");
+                Toast.makeText(getApplicationContext(), key+" "+"Remote controller key", Toast.LENGTH_LONG).show();
+            }
 
             handler.post(checkRemoteConnection);
 
@@ -109,14 +115,21 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
         }
         @Override
         public void onConnectivityChange(boolean isConnected) {
+//            Log.d("onPConnectChange",isConnected+" "+"Connectivity change inside onConnectivityChange for product listeners");
+//            Toast.makeText(getApplicationContext(), isConnected+" "+"Connectivity change inside onConnectivityChange for product listeners", Toast.LENGTH_LONG).show();
             notifyStatusChange();
         }
     };
     private BaseComponent.ComponentListener mDJIComponentListener = new BaseComponent.ComponentListener() {
         @Override
         public void onConnectivityChange(boolean isConnected) {
+//            Log.d("onCompConnectChange",isConnected+" "+"Connectivity change inside ComponentListener device");
+//            Toast.makeText(getApplicationContext(), "Connectivity change inside ComponentListener"+" "+isConnected, Toast.LENGTH_LONG).show();
             notifyStatusChange();
+
         }
+
+
     };
     private void notifyStatusChange() {
         mHandler.removeCallbacks(updateRunnable);
@@ -182,43 +195,60 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
         both_c1_c2_click = (CheckBox) findViewById(R.id.c1_c2_both_click);
         checkBox = (CheckBox) findViewById(R.id.remote_checkbox);
         progressBar = (ProgressBar) findViewById(R.id.progressBar1);
-        progressBar.setVisibility(View.VISIBLE);
+        //Need to ask y permission was denied for the two things : mount unmount and system alert
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.VIBRATE,
+                            Manifest.permission.INTERNET, Manifest.permission.ACCESS_WIFI_STATE,
+                            Manifest.permission.WAKE_LOCK, Manifest.permission.ACCESS_COARSE_LOCATION,
+                            Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.CHANGE_WIFI_STATE,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.READ_PHONE_STATE,Manifest.permission.BLUETOOTH,Manifest.permission.BLUETOOTH_ADMIN,
+                    }
+                    , 1);
+        }
+        else{
+            register();
+        }
 
-        asyncCall.execute();
-//
-//        login_button.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//
-//              loginAccount();
-//
-//            }
-//        });
-//        logout_button.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                logoutAccount();
-//                clearAll();
-//
-//            }
-//        });
-//        setListeners.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                addTheKeyListeners();
-//                setListeners.getBackground().setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
-//            }
-//        });
+
+
 
 
 
 
     }
 
-//    private void addTheKeyListeners() {
-//        KeyManagerHelper keyManagerHelper = new KeyManagerHelper(MainActivity.this, getApplicationContext());
-//        keyManagerHelper.addKeyListeners();
-//    }
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        int sum = 0;
+        String s;
+        for (int x : grantResults) {
+            sum += x;
+        }
+
+                if (sum == 0) {
+                    // We can now safely use the API we requested access to
+                   register();
+
+                } else {
+                    // Permission was denied or request was cancelled
+                    int y;
+                    for(y=0;y<grantResults.length;y++){
+                        if(grantResults[y]==-1){
+                            Toast.makeText(getApplicationContext(), "Please grant device permissions for in order to proceed", Toast.LENGTH_LONG).show();                        }
+                    }
+
+
+                }
+        }
+
+    public void register(){
+        progressBar.setVisibility(View.VISIBLE);
+        DJISDKManager.getInstance().registerApp(MainActivity.this, mDJISDKManagerCallback);
+    }
+
+
 
     @Override
     public void onUpdate(List<DJIDiagnostics> djiDiagnosticses) {
@@ -350,15 +380,14 @@ public class MainActivity extends AppCompatActivity implements DJIDiagnostics.Di
         });
     }
 
-
-    public class AsyncCall extends AsyncTask<Void,Void,Void>{
-
-
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            DJISDKManager.getInstance().registerApp(MainActivity.this, mDJISDKManagerCallback);
-            return null;
-        }
-    }
+//
+//    public class AsyncCall extends AsyncTask<Void,Void,Void>{
+//
+//
+//
+//        @Override
+//        protected Void doInBackground(Void... voids) {
+//            return null;
+//        }
+//    }
 }

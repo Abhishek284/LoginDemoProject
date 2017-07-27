@@ -2,17 +2,13 @@ package com.dji.logindemoproject;
 
 import android.content.Context;
 import android.os.Handler;
-import android.provider.Settings;
 import android.support.annotation.Nullable;
-import android.widget.Toast;
 
 import dji.common.remotecontroller.HardwareState;
 import dji.keysdk.DJIKey;
 import dji.keysdk.KeyManager;
 import dji.keysdk.RemoteControllerKey;
 import dji.keysdk.callback.KeyListener;
-
-import static dji.midware.data.model.P3.DataCameraVirtualKey.KEY.S1;
 
 /**
  * Created by abhishek on 20/07/17.
@@ -59,19 +55,24 @@ public class KeyManagerHelper  {
 
             boolean clicked = newValue != null && ((HardwareState.Button) newValue).isClicked();
             if (clicked && !isHandlerC1SingleClickCallbackSet) {
-//                if(isHandlerC2SingleClickCallbackSet){
-//                    isHandlerC1SingleClickCallbackSet=true;
-//                    c2PressedTime=-1;
-//                }
+
+
 
                     c1PressedTime = System.currentTimeMillis();
                 handler.postDelayed(c1LongClickRunnable, 1000);
-                if(Math.abs(c1PressedTime-c2PressedTime)<120){
+                if(Math.abs(c1PressedTime-c2PressedTime)<60){
                     c1PressedTime=-1;
                     c2PressedTime=-1;
                     handler.post(c1c2BothClickRunnable);
                     handler.removeCallbacks(c1LongClickRunnable);
                     handler.removeCallbacks(c2LongClickRunnable);
+
+                }
+                if(isHandlerC2SingleClickCallbackSet){
+                    handler.removeCallbacks(c2ClickRunnable);
+                    //the click of the c2 button can also be discarded if needed
+
+                    handler.post(c2ClickRunnable);
 
                 }
 
@@ -127,7 +128,6 @@ public class KeyManagerHelper  {
             isHandlerC1SingleClickCallbackSet=false;
             handler.removeCallbacks(c1LongClickRunnable);
             callback.onC1Clicked();
-
             c1PressedTime=-1;
 
         }
@@ -145,14 +145,12 @@ public class KeyManagerHelper  {
         public void onValueChange(@Nullable Object o, @Nullable final Object newValue) {
             boolean clicked = newValue != null && ((HardwareState.Button) newValue).isClicked();
             if (clicked && !isHandlerC2SingleClickCallbackSet) {
-//                if(isHandlerC1SingleClickCallbackSet){
-//                    isHandlerC2SingleClickCallbackSet=false;
-//                    c1PressedTime=-1;
-//                }
+
+
 
                 c2PressedTime = System.currentTimeMillis();
                 handler.postDelayed(c2LongClickRunnable, 1000);
-                if(Math.abs(c1PressedTime-c2PressedTime)<120){
+                if(Math.abs(c1PressedTime-c2PressedTime)<60){
                     c1PressedTime=-1;
                     c2PressedTime=-1;
                     handler.post(c1c2BothClickRunnable);
@@ -160,6 +158,12 @@ public class KeyManagerHelper  {
                     handler.removeCallbacks(c1LongClickRunnable);
 
                 }
+                if(isHandlerC1SingleClickCallbackSet){
+                    handler.removeCallbacks(c1ClickRunnable);
+                    //the click of the c1 button can also be discarded if needed
+                    handler.post(c1ClickRunnable);
+                }
+
             }
 
 
